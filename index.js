@@ -54,21 +54,26 @@ function confrc(cwd, env, opts) {
    .filter(dir => exists(dir))
    .map(dir => dir.replace(cwd, ''));
 
-  const resolvedValues = [
+  // search for the files, read if they exist, and merge the output
+  let values = [].concat(
     search('common'),
     search('default'),
-    search(env.NODE_ENV),
     search('local'),
-    `.env`,
-  ].reduce((prev, next) => prev.concat(next), [])
-   .reduce(read, env);
+    `.env`
+  ).reduce((prev, next) => prev.concat(next), [])
+   .reduce(read, env)
 
-  if (resolvedValues.hasOwnProperty('_')) delete resolvedValues['_'];
+  // now look for environment-specific config files, since it may
+  // have been changed in an env file above
+  values = search(values.NODE_ENV).reduce(read, values);
+
+  // remove non-environment variable props
+  delete values['_'];
 
   function config() {}
 
   Object.defineProperties(config, {
-    env: {value: resolvedValues},
+    env: {value: values},
     cwd: {value: cwd},
   })
 
