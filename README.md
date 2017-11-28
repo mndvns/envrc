@@ -1,6 +1,6 @@
 # confrc
 
-A simple config loader that melds [https://github.com/motdotla/dotenv](dotenv), [https://github.com/dominictarr/rc](rc), and [https://github.com/camshaft/envs](envs).
+A simple config loader that melds [dotenv](https://github.com/motdotla/dotenv), [rc](https://github.com/dominictarr/rc), and [envs](https://github.com/camshaft/envs).
 
 ## Features
 
