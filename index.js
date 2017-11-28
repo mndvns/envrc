@@ -63,6 +63,8 @@ function confrc(cwd, env, opts) {
   ].reduce((prev, next) => prev.concat(next), [])
    .reduce(read, env);
 
+  if (resolvedValues.hasOwnProperty('_')) delete resolvedValues['_'];
+
   function config() {}
 
   Object.defineProperties(config, {
@@ -85,7 +87,9 @@ function confrc(cwd, env, opts) {
   return Object.freeze(proxy);
 
   function search(name) {
-    const paths = [`env.${name}`];
+    if (!name) return [];
+
+    const paths = [`.env.${name}`];
 
     for (let i = 0; i < dirs.length; i++) {
       let dir = dirs[i];
