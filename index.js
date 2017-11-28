@@ -11,6 +11,7 @@ const join = require('path').join;
 /**
  * Expose `confrc`
  */
+
 module.exports = confrc;
 
 /**
