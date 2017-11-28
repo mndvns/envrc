@@ -17,6 +17,7 @@ In the current directory it looks for
 - `<cwd>/.env.default`
 - `<cwd>/.env.<NODE_ENV>`
 - `<cwd>/.env.local`
+- `<cwd>/.env`
 
 Then for each of the following directories...
 
