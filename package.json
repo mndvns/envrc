@@ -1,0 +1,19 @@
+{
+  "name": "envrc",
+  "version": "0.1.0",
+  "description": "env config file loader",
+  "main": "index.js",
+  "scripts": {
+    "test": "./node_modules/.bin/mocha"
+  },
+  "author": "Michael Andrew Vanasse <mail@mndvns.com>",
+  "license": "MIT",
+  "dependencies": {
+    "deep-extend": "^0.5.0",
+    "whatever-format": "^1.0.1"
+  },
+  "devDependencies": {
+    "mocha": "^4.0.1",
+    "should": "^13.1.3"
+  }
+}
