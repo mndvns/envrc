@@ -1,6 +1,6 @@
 {
   "name": "envrc",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "env config file loader",
   "main": "index.js",
   "scripts": {
