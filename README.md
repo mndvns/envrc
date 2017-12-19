@@ -1,4 +1,4 @@
-# confrc
+# envrc
 
 A simple config loader that melds [dotenv](https://github.com/motdotla/dotenv), [rc](https://github.com/dominictarr/rc), and [envs](https://github.com/camshaft/envs).
 
@@ -38,26 +38,26 @@ Then for each of the following directories...
 
 ```js
 // reads and merges files
-var conf = require('confrc')();
+var conf = require('envrc')();
 
 // change your working directory
-var conf = require('confrc')('/some/other/dir');
+var conf = require('envrc')('/some/other/dir');
 // same as
-var conf = require('confrc')({cwd: '/some/other/dir'});
+var conf = require('envrc')({cwd: '/some/other/dir'});
 
 // override or add some variables
-var conf = require('confrc')({NODE_ENV: 'production', foo: 'bar'});
+var conf = require('envrc')({NODE_ENV: 'production', foo: 'bar'});
 // same as
-var conf = require('confrc')({env: {NODE_ENV: 'production', foo: 'bar'}});
+var conf = require('envrc')({env: {NODE_ENV: 'production', foo: 'bar'}});
 
 // add other lookup directories
-var conf = require('confrc')({dirs: ['my-other-environments']});
+var conf = require('envrc')({dirs: ['my-other-environments']});
 ```
 
 #### Values
 
 ```js
-var conf = require('confrc')({buz: 'cool'});
+var conf = require('envrc')({buz: 'cool'});
 
 // access values as object properties
 conf.buz === 'cool';

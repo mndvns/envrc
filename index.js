@@ -9,10 +9,10 @@ const resolve = require('path').resolve;
 const join = require('path').join;
 
 /**
- * Expose `confrc`
+ * Expose `envrc`
  */
 
-module.exports = confrc;
+module.exports = envrc;
 
 /**
  * Read and merge environment config files
@@ -20,7 +20,7 @@ module.exports = confrc;
  * @param {Object} [env] - additional environment variables
  * @param {Object} [opts] - configuration options (properties: cwd, env, dirs)
  */
-function confrc(cwd, env, opts) {
+function envrc(cwd, env, opts) {
   if (typeof cwd === 'object') {
     opts = env;
     env = cwd;
