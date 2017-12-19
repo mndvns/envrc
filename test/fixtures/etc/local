@@ -1,2 +1,3 @@
 changing_value = same
 static_value = same
+other_value = ignored

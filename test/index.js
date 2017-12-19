@@ -18,6 +18,20 @@ describe('cwd', () => {
   });
 });
 
+describe('ignores', () => {
+  it('should ignore files that match globs', () => {
+    const conf = lib(fixtures, {ignore: 'etc/*'});
+    conf.value.should.equal('something');
+    conf.other_value.should.equal('original');
+  });
+
+  it('should ignore files that match globs from evironment', () => {
+    const conf = lib(fixtures, {'ENVRC_IGNORE': 'etc/*'});
+    conf.value.should.equal('something');
+    conf.other_value.should.equal('original');
+  });
+});
+
 describe('env', () => {
   it('should accept variables explicitly or implicitly', () => {
     lib({stuff: 'good'}).stuff.should.equal('good')

@@ -2,11 +2,18 @@
  * Module dependencies
  */
 
+const minimatch = require('minimatch');
 const extend = require('deep-extend');
 const format = require('whatever-format');
 const exists = require('fs').existsSync;
 const resolve = require('path').resolve;
 const join = require('path').join;
+
+/**
+ * Constants
+ */
+
+const FAIL = Symbol('fail');
 
 /**
  * Expose `envrc`
@@ -39,7 +46,7 @@ function envrc(cwd, env, opts) {
     cwd = opts.cwd || process.cwd();
   }
 
-  if (!hasOpts(['cwd', 'env', 'dirs', 'overrides'])) {
+  if (!hasOpts(['cwd', 'env', 'dirs', 'overrides', 'ignores', 'ignore'])) {
     opts = {env: opts};
   }
 
@@ -51,86 +58,130 @@ function envrc(cwd, env, opts) {
     opts.overrides = {};
   }
 
+  if (!opts.dirs) {
+    opts.dirs = [];
+  }
+
+  if (!opts.ignore) {
+    opts.ignore = [];
+  } else if (typeof opts.ignore === 'string') {
+    opts.ignore = [opts.ignore];
+  }
+
   env = Object.assign({}, process.env, opts.env, opts.overrides);
 
   // remove non-environment variable props
-  delete env['_'];
+  if (env.hasOwnProperty('_')) delete env['_'];
 
   let dirs = [];
+  let files = [];
 
-  dirs.push(
-    'etc',
-    'config',
-    '.config'
-  );
+  if (!env['ENVRC_IGNORE_ALL']) {
+    if (!env['ENVRC_IGNORE_CWD']) dirs.push(cwd);
+    if (!env['ENVRC_IGNORE_ETC']) dirs.push('etc');
+    if (!env['ENVRC_IGNORE_CONFIG']) dirs.push('config');
+    if (!env['ENVRC_IGNORE_DOT_CONFIG']) dirs.push('.config');
 
-  dirs = dirs
-    .concat(opts.dirs || [])
-    .map(dir => join(cwd, dir))
-    .filter(dir => exists(dir))
-    .map(dir => dir.replace(cwd, ''));
+    dirs = dirs
+      .concat(opts.dirs)
+      .map(dir => join(cwd, dir))
+      .filter(dir => exists(dir))
+      .map(dir => dir.replace(cwd, ''));
 
-  // search for the files, read if they exist, and merge the output
-  let values = [].concat(
-    search('common'),
-    search('default'),
-    search('local'),
-  )
-
-  if (!env['IGNORE_ENV']) {
-    values.push('.env');
+    // search for the files, read if they exist, and merge the output
+    if (!env['ENVRC_IGNORE_COMMON']) files.push(search('common'));
+    if (!env['ENVRC_IGNORE_DEFAULT']) files.push(search('default'));
+    if (!env['ENVRC_IGNORE_LOCAL']) files.push(search('local'));
+    if (!env['ENVRC_IGNORE_ENV']) files.push('.env');
   }
 
-  values = values
-    .reduce((prev, next) => prev.concat(next), [])
+  const ignores = opts.ignore;
+
+  if (env['ENVRC_IGNORE']) {
+    ignores.push(env['ENVRC_IGNORE']);
+  }
+
+  const values = [].concat.apply([], files)
+    .filter(file => {
+      for (let i = 0; i < ignores.length; i++) {
+        let glob = ignores[i];
+        if (minimatch(file, glob)) return false;
+      }
+      return exists(join(cwd, file))
+    })
     .reduce(read, {});
 
   Object.assign(values, opts.overrides);
 
   // now look for environment-specific config files, since it may
   // have been changed in an env file above
-  values = search(values.NODE_ENV || env.NODE_ENV).reduce(read, values);
+  const configValues = search(values.NODE_ENV || env.NODE_ENV).reduce(read, values);
 
-  function config() {}
+  // merge values with env values
+  const configMerged = Object.assign({}, env, values);
 
   Object.defineProperties(config, {
-    merged: {value: Object.assign({}, env, values)},
-    values: {value: values},
+    merged: {value: configMerged},
+    values: {value: configValues},
     env: {value: env},
     cwd: {value: cwd},
-  })
+  });
 
   const proxy = new Proxy(config, {
-    get: function(target, name) {
-      if (target.hasOwnProperty(name)) return target[name];
-      if (target.merged.hasOwnProperty(name)) return target.merged[name];
+    get: function(_target, name) {
+      return get(name);
     },
-    apply: function(target, thisArg, args) {
+    apply: function(_target, _thisArg, args) {
       const names = [].concat(args.shift());
       const fallback = args.pop();
-      return get.call(target.merged, names, fallback);
+      return apply(names, fallback);
     }
   });
 
   return Object.freeze(proxy);
+
+  function config() {}
+
+  function get(name, fallback) {
+    if (configValues.hasOwnProperty(name)) return configValues[name];
+    if (configMerged.hasOwnProperty(name)) return configMerged[name];
+    if (config.hasOwnProperty(name)) return config[name];
+    return fallback;
+  }
+
+  function apply(names, fallback) {
+    const value = get(names.shift(), FAIL);
+    if (value !== FAIL) return value;
+    if (!names.length) return fallback;
+    return apply(names, fallback);
+  }
 
   function hasOpts(list) {
     return opts.hasOwnProperty(list.shift()) || (list.length && hasOpts(list));
   }
 
   function search(name) {
-    if (!name) return [];
-    if (env['IGNORE_ENVS']) return [];
-    if (env[`IGNORE_ENV_${name.toUpperCase()}`]) return [];
+    const paths = [];
 
-    const paths = [`.env.${name}`];
+    if (!name) return paths;
+
+    if (!ignored('ENV', name)) {
+      paths.push(`.env.${name}`)
+    }
 
     for (let i = 0; i < dirs.length; i++) {
       let dir = dirs[i];
-      paths.push(`${dir}/${name}`);
+      if (!ignored(dir, name)) {
+        paths.push(`${dir}/${name}`);
+      }
     }
 
     return paths;
+  }
+
+  function ignored() {
+    const key = [].slice.call(arguments).join('_').toUpperCase()
+    return env['ENVRC_IGNORE_' + key];
   }
 
   function read(conf, file) {
@@ -143,9 +194,4 @@ function envrc(cwd, env, opts) {
     }
   }
 
-  function get(names, fallback) {
-    let name = names.shift();
-    if (this.hasOwnProperty(name)) return this[name];
-    return names.length ? get.call(this, names, fallback) : fallback;
-  }
 }
