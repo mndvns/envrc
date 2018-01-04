@@ -3,6 +3,7 @@
   "version": "0.3.2",
   "description": "env config file loader",
   "main": "index.js",
+  "repository": "https://github.com/mndvns/envrc.git",
   "scripts": {
     "test": "./node_modules/.bin/mocha"
   },
