@@ -69,6 +69,24 @@ describe('env', () => {
     });
   });
 
+  describe('options', () => {
+    it('should not throw', () => {
+      lib({env: {ABC: 'abc'}})('ABC', {required: true}).should.equal('abc');
+    });
+
+    it('should throw', () => {
+      should.throws(() => {
+        lib({env: {ABC: 'abc'}})('DEF', {required: true});
+      }, /undefined value for 'DEF'/);
+    });
+
+    it('should throw a type error', () => {
+      should.throws(() => {
+        lib({env: {num: 10}})('num', {type: 'string'});
+      }, /'num' requires type string, but got type number/);
+    });
+  });
+
   describe('variables', () => {
     it('should count the stored variables', () => {
       lib.count.should.be.a.Number();
