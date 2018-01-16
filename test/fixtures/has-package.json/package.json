@@ -1,0 +1,6 @@
+{
+  "name": "test",
+  "envrc": {
+    "in_package": "here"
+  }
+}

@@ -1,32 +1,43 @@
 const lib = require('..');
 const should = require('should');
-const fixtures = __dirname + '/fixtures';
+const Path = require('path');
+const fixtures = (...args) => Path.join(__dirname, 'fixtures', ...args);
 
 describe('cwd', () => {
+  it('should accept the name of a module', () => {
+    let input = fixtures('has-package.json/nested');
+    let output = fixtures('has-package.json');
+    should(lib({name: 'test', cwd: input}).cwd).equal(output);
+    should(lib({name: 'test', cwd: input}).works).equal(true);
+    should(lib({name: 'test', cwd: input}).rc_file_property).equal('good');
+    should(lib({name: 'test', cwd: input}).rc_nested_file_property).equal('also good');
+    should(lib({name: 'test', cwd: input}).in_package).equal('here');
+  });
+
   it('should accept cwd as string or object', () => {
-    lib(fixtures).cwd.should.equal(fixtures);
-    lib({cwd: fixtures}).cwd.should.equal(fixtures);
+    lib(fixtures('simple')).cwd.should.equal(fixtures('simple'));
+    lib({cwd: fixtures('simple')}).cwd.should.equal(fixtures('simple'));
   });
 
   it('should accept cwd', () => {
-    lib(fixtures).value.should.equal('something');
+    lib(fixtures('simple')).value.should.equal('something');
   });
 
   it('should follow file heirarchy', () => {
-    lib(fixtures).static_value.should.equal('same');
-    lib(fixtures).changing_value.should.equal('different');
+    lib(fixtures('simple')).static_value.should.equal('same');
+    lib(fixtures('simple')).changing_value.should.equal('different');
   });
 });
 
 describe('ignores', () => {
   it('should ignore files that match globs', () => {
-    const conf = lib(fixtures, {ignore: 'etc/*'});
+    const conf = lib(fixtures('simple'), {ignore: 'etc/*'});
     conf.value.should.equal('something');
     conf.other_value.should.equal('original');
   });
 
   it('should ignore files that match globs from evironment', () => {
-    const conf = lib(fixtures, {ENVRC_IGNORE: 'etc/*'});
+    const conf = lib(fixtures('simple'), {ENVRC_IGNORE: 'etc/*'});
     conf.value.should.equal('something');
     conf.other_value.should.equal('original');
   });
@@ -46,6 +57,40 @@ describe('env', () => {
   it('should override environment variables', () => {
     lib({env: {NODE_ENV: 'production'}}).NODE_ENV.should.equal('production');
     lib({env: {NODE_ENV: 'development'}}).NODE_ENV.should.equal('development');
+  });
+
+  describe('extensions', () => {
+    it('should read files with extensions', () => {
+      should(lib(fixtures('has-file-extensions')).glark).equal('blark');
+      should(lib(fixtures('has-file-extensions')).fubz).equal('norc');
+    });
+  });
+
+  describe('special', () => {
+    it('should return env', () => {
+      lib(fixtures('simple')).env.should.be.an.Object();
+      lib(fixtures('has-special-keys')).env.should.equal(10);
+    });
+
+    it('should return cwd', () => {
+      lib(fixtures('simple')).cwd.should.be.a.String();
+      lib(fixtures('has-special-keys')).cwd.should.equal(20);
+    });
+
+    it('should return merged', () => {
+      lib(fixtures('simple')).merged.should.be.an.Object();
+      lib(fixtures('has-special-keys')).merged.should.equal(30);
+    });
+
+    it('should return values', () => {
+      lib(fixtures('simple')).values.should.be.an.Object();
+      lib(fixtures('has-special-keys')).values.should.equal(40);
+    });
+
+    it('should return files', () => {
+      lib(fixtures('simple')).files.should.be.an.Array();
+      lib(fixtures('has-special-keys')).files.should.equal(50);
+    });
   });
 
   describe('fallbacks', () => {
