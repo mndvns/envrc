@@ -1,6 +1,6 @@
 {
   "name": "envrc",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "env config file loader",
   "main": "index.js",
   "repository": "https://github.com/mndvns/envrc.git",
